@@ -120,7 +120,7 @@ const App = ({}) => {
 
     return (
         <div>
-            <h2>Синхронизировать дизайн с кодом?</h2>
+            <h2 className="header">Синхронизировать дизайн с кодом?</h2>
             <ConfigForm cachedConfig={cachedConfig}/>
             {isLoading ? (
                 <p>Loading...</p>

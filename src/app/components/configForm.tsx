@@ -70,7 +70,7 @@ export function ConfigForm(props: Props) {
                 Base branch:
                 <input type="text" {...bindBaseBranch} />
             </p>
-            <button type="submit" value="Submit">
+            <button type="submit" value="Submit" className="submit-button">
                 Отправить
             </button>
         </form>
