@@ -3,8 +3,8 @@
 ### Как запустить плагин
 
 1. Запустить `yarn` для установки зависимостей.
-2. Запустить `yarn build:watch` для старта вебпака в watch mode.
-3. Открыть десктопное приложение `Figma` -> `Plugins` -> `Development` -> `New Plugin...` и выбрать `manifest.json` файл из этого репозитория.
+1. Запустить `yarn build:watch` для старта вебпака в watch mode.
+1. Открыть десктопное приложение `Figma` -> `Plugins` -> `Development` -> `New Plugin...` и выбрать `manifest.json` файл из этого репозитория.
 
 ### Что делает плагин
 
@@ -12,7 +12,7 @@
 В конфиге есть следующие поля:
 - `repoPath` — путь до репозитория, в который будет выкачиваться файл со стилями,
 - `token` — личный токен, который можно получить [таким образом](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token),
-- `committerName`, `committerEmail` — авторизационные данные,
+- `committerName`, `committerEmail` — любые имя и email, от которых будет сделан коммит,
 - `headBranch` — ветка, в которую произойдет коммит стилей,
 - `baseBranch` — ветка, в которую произойдет пул реквест
 

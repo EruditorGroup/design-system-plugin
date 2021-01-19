@@ -1,17 +1,16 @@
 import {useState} from 'react';
 
-export const useInput = (initialValue) => {
-    const [value, setValue] = useState(initialValue);
+interface HandleValueChangeInterface {
+  target: HTMLInputElement;
+}
 
-    return {
-        value,
-        setValue,
-        // reset: () => setValue(""),
-        bind: {
-            value,
-            onChange: (event) => {
-                setValue(event.target.value);
-            },
-        },
-    };
+export const useInput = (initialValue: string) => {
+  const [value, setValue] = useState(initialValue);
+
+  return [value, setValue, {
+    value,
+    onChange: (event: HandleValueChangeInterface) => {
+      setValue(event.target.value);
+    },
+  }];
 };
