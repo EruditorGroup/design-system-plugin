@@ -8,7 +8,6 @@
     "jsx": "react",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "experimentalDecorators": true,
     "strict": true,
     "moduleResolution": "node",
     "typeRoots": [

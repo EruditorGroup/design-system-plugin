@@ -11,18 +11,19 @@
   "prettier": {
     "trailingComma": "es5",
     "singleQuote": true,
-    "printWidth": 120,
     "tabWidth": 2,
-    "bracketSpacing": false
+    "bracketSpacing": false,
+    "arrowParens": "avoid"
   },
   "dependencies": {
     "react": "^17.0.1",
-    "react-dom": "^17.0.1"
-  },
-  "devDependencies": {
+    "react-dom": "^17.0.1",
     "@figma/plugin-typings": "^1.19.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
+    "sort-json": "^2.0.0"
+  },
+  "devDependencies": {
     "css-loader": "^5.0.1",
     "html-webpack-inline-source-plugin": "^0.0.10",
     "html-webpack-plugin": "^3.2.0",
