@@ -6,8 +6,9 @@ import {
   GET_CONFIG_MESSAGE,
   GITHUB_CONFIG,
   NETWORK_REQUEST,
-  SUCCESS_LOG_MESSAGE,
-} from './consts';
+} from '../constants';
+
+const SUCCESS_LOG_MESSAGE = 'Успешно отправлено!';
 
 type RequestCreator = (
   url: RequestInfo,
@@ -15,8 +16,8 @@ type RequestCreator = (
   method: string,
   body?: string | undefined
 ) => Promise<unknown>;
-const asyncMethod: RequestCreator = (url, token, method, body) => {
-  return fetch(url, {
+const asyncMethod: RequestCreator = (url, token, method, body) =>
+  fetch(url, {
     headers: {
       Authorization: `token ${token}`,
     },
@@ -30,19 +31,24 @@ const asyncMethod: RequestCreator = (url, token, method, body) => {
     }
     return response.json();
   });
-};
 
-const getLastFileSha = (config: Config) =>
+type LastFileShaGetter = (config: Config) => Promise<unknown>;
+const getLastFileSha: LastFileShaGetter = config =>
   asyncMethod(
     `${config.repoPath}/contents/styles.json?ref=${config.headBranch}`,
     config.token,
     'GET'
   );
 
-const commitChangesToHeadBranch = (
+type ChangesToHeadBranchCommitter = (
   config: Config,
   event: EventData,
   sha: string
+) => Promise<unknown>;
+const commitChangesToHeadBranch: ChangesToHeadBranchCommitter = (
+  config,
+  event,
+  sha
 ) =>
   asyncMethod(
     `${config.repoPath}/contents/styles.json`,
@@ -81,16 +87,13 @@ const makePullRequestFromHeadBranch: PullRequestCreator = config => {
 };
 
 type StylesSender = (event: EventData, config: Config) => Promise<unknown>;
-const sendStylesToGithub: StylesSender = (event, config) => {
-  return (
-    config &&
-    getLastFileSha(config)
-      // @ts-ignore
-      .then(json => json.sha)
-      .then(sha => commitChangesToHeadBranch(config, event, sha))
-      .then(() => makePullRequestFromHeadBranch(config))
-  );
-};
+const sendStylesToGithub: StylesSender = (event, config) =>
+  config &&
+  getLastFileSha(config)
+    // @ts-ignore
+    .then(json => json.sha)
+    .then(sha => commitChangesToHeadBranch(config, event, sha))
+    .then(() => makePullRequestFromHeadBranch(config));
 
 const App: React.FC = () => {
   const [cachedConfig, setCachedConfig] = useState({
@@ -113,7 +116,7 @@ const App: React.FC = () => {
         setLoading(true);
         config &&
           sendStylesToGithub(event, config)
-            ?.then(closePlugin)
+            .then(closePlugin)
             .catch(error => {
               setLoading(false);
               setErrorLog(error.toString());

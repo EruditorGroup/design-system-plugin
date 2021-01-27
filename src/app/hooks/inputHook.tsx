@@ -4,14 +4,14 @@ type HandleValueChangeInterface = {
   target: HTMLInputElement;
 };
 
-type InputSetter = (
+type InputHook = (
   initialValue: string
 ) => [
   string,
   (value: string) => void,
   {value: string; onChange: (event: HandleValueChangeInterface) => void}
 ];
-export const useInput: InputSetter = initialValue => {
+export const useInput: InputHook = initialValue => {
   const [value, setValue] = useState(initialValue);
 
   return [

@@ -10,22 +10,26 @@ export type Paint = {
   opacity?: number;
   blendMode?: string;
   color?: Color;
+  hexColor?: string;
 };
 
-function componentToHex(component: number) {
+type ComponentToHexTransformer = (component: number) => string;
+const componentToHex: ComponentToHexTransformer = component => {
   const hex = Math.floor(component * 255).toString(16);
   return hex.length === 1 ? '0' + hex : hex;
-}
+};
 
-function rgbToHex(color: Color) {
-  return color
+type RgbToHexTransformer = (color: Color) => string;
+const rgbToHex: RgbToHexTransformer = color =>
+  color
     ? '#' +
-        componentToHex(color.r) +
-        componentToHex(color.g) +
-        componentToHex(color.b)
-    : undefined;
-}
+      componentToHex(color.r) +
+      componentToHex(color.g) +
+      componentToHex(color.b)
+    : '';
 
-export function convertPaintColor(paint: Paint) {
-  return {...paint, color: paint.color && rgbToHex(paint.color)};
-}
+type PaintColorConverter = (paint: Paint) => Paint;
+export const convertPaintColor: PaintColorConverter = paint => ({
+  ...paint,
+  hexColor: paint.color && rgbToHex(paint.color),
+});

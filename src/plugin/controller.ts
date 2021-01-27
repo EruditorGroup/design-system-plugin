@@ -1,9 +1,9 @@
-import {convertPaintColor} from '../app/utils/colorUtils';
+import {Color, convertPaintColor} from '../app/utils/colorUtils';
 import {
   GET_CONFIG_MESSAGE,
   GITHUB_CONFIG,
   NETWORK_REQUEST,
-} from '../app/components/consts';
+} from '../app/constants';
 
 type TextStyle = {
   [key: string]: {
@@ -23,7 +23,8 @@ type ColorStyle = {
       visible?: boolean;
       opacity?: number;
       blendMode?: string;
-      color?: string;
+      color?: Color;
+      hexColor?: string;
     }[];
   };
 };
