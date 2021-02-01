@@ -1,15 +1,11 @@
-import {useState} from 'react';
-
-type HandleValueChangeInterface = {
-  target: HTMLInputElement;
-};
+import {ChangeEvent, useState} from 'react';
 
 type InputHook = (
   initialValue: string
 ) => [
   string,
   (value: string) => void,
-  {value: string; onChange: (event: HandleValueChangeInterface) => void}
+  {value: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void}
 ];
 export const useInput: InputHook = initialValue => {
   const [value, setValue] = useState(initialValue);
@@ -19,7 +15,7 @@ export const useInput: InputHook = initialValue => {
     setValue,
     {
       value,
-      onChange: (event: HandleValueChangeInterface) => {
+      onChange: (event: ChangeEvent<HTMLInputElement>) => {
         setValue(event.target.value);
       },
     },

@@ -2,11 +2,7 @@ import * as React from 'react';
 import {useState} from 'react';
 import '../styles/ui.css';
 import ConfigForm, {Config, EventData} from './СonfigForm';
-import {
-  GET_CONFIG_MESSAGE,
-  GITHUB_CONFIG,
-  NETWORK_REQUEST,
-} from '../constants';
+import {GET_CONFIG_MESSAGE, GITHUB_CONFIG, NETWORK_REQUEST} from '../constants';
 
 const SUCCESS_LOG_MESSAGE = 'Успешно отправлено!';
 
@@ -90,8 +86,7 @@ type StylesSender = (event: EventData, config: Config) => Promise<unknown>;
 const sendStylesToGithub: StylesSender = (event, config) =>
   config &&
   getLastFileSha(config)
-    // @ts-ignore
-    .then(json => json.sha)
+    .then(json => (json as {sha: string}).sha)
     .then(sha => commitChangesToHeadBranch(config, event, sha))
     .then(() => makePullRequestFromHeadBranch(config));
 
