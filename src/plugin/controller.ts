@@ -1,4 +1,4 @@
-import {Color, convertPaintColor} from '../app/utils/colorUtils';
+import {convertPaintColor, convertPaintName} from '../app/utils/colorUtils';
 import {
   GET_CONFIG_MESSAGE,
   GITHUB_CONFIG,
@@ -17,16 +17,7 @@ type TextStyle = {
 };
 
 type ColorStyle = {
-  [key: string]: {
-    paints: {
-      type: string;
-      visible?: boolean;
-      opacity?: number;
-      blendMode?: string;
-      color?: Color;
-      hexColor?: string;
-    }[];
-  };
+  [key: string]: string;
 };
 
 type IconStyle = {
@@ -38,7 +29,7 @@ type IconStyle = {
 };
 
 type Styles = {
-  colorStyles: ColorStyle[];
+  colors: ColorStyle;
   textStyles: TextStyle[];
   iconStyles: IconStyle[];
 };
@@ -70,14 +61,15 @@ figma.ui.onmessage = msg => {
     });
 
     // Get colors
-    // TODO: get necessary properties when they'll be in figma
-    styles.colorStyles = figma.getLocalPaintStyles().map(style => {
-      return {
-        [style.name]: {
-          paints: style.paints.map(paint => convertPaintColor(paint)),
-        },
-      };
-    });
+    let colors: ColorStyle = {};
+    figma
+      .getLocalPaintStyles()
+      .forEach(
+        style =>
+          (colors[convertPaintName(style.name)] =
+            convertPaintColor(style.paints[0]).hexColor || '')
+      );
+    styles.colors = colors;
 
     // Get svg icons (mostly for Web React now)
     let nodes = figma.currentPage.findAll(node => node.type === 'VECTOR');

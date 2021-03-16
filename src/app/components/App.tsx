@@ -31,7 +31,7 @@ const asyncMethod: RequestCreator = (url, token, method, body) =>
 type LastFileShaGetter = (config: Config) => Promise<unknown>;
 const getLastFileSha: LastFileShaGetter = config =>
   asyncMethod(
-    `${config.repoPath}/contents/styles.json?ref=${config.headBranch}`,
+    `${config.repoPath}/contents/packages/common/assets/ds.json?ref=${config.headBranch}`,
     config.token,
     'GET'
   );
@@ -47,7 +47,7 @@ const commitChangesToHeadBranch: ChangesToHeadBranchCommitter = (
   sha
 ) =>
   asyncMethod(
-    `${config.repoPath}/contents/styles.json`,
+    `${config.repoPath}/contents/packages/common/assets/ds.json`,
     config.token,
     'PUT',
     JSON.stringify({
@@ -87,8 +87,8 @@ const sendStylesToGithub: StylesSender = (event, config) =>
   config &&
   getLastFileSha(config)
     .then(json => (json as {sha: string}).sha)
-    .then(sha => commitChangesToHeadBranch(config, event, sha))
-    .then(() => makePullRequestFromHeadBranch(config));
+    .then(sha => commitChangesToHeadBranch(config, event, sha));
+// .then(() => makePullRequestFromHeadBranch(config));
 
 const App: React.FC = () => {
   const [cachedConfig, setCachedConfig] = useState({
