@@ -61,15 +61,19 @@ figma.ui.onmessage = msg => {
     });
 
     // Get colors
-    let colors: ColorStyle = {};
-    figma
+    styles.colors = figma
       .getLocalPaintStyles()
-      .forEach(
-        style =>
-          (colors[convertPaintName(style.name)] =
-            convertPaintColor(style.paints[0]).hexColor || '')
-      );
-    styles.colors = colors;
+      .reduce((acc, {name, paints: [paint]}) => {
+        console.log(
+          acc,
+          convertPaintName(name),
+          convertPaintColor(paint).colorCode
+        );
+        return {
+          ...acc,
+          [convertPaintName(name)]: convertPaintColor(paint).colorCode || '',
+        };
+      }, {});
 
     // Get svg icons (mostly for Web React now)
     let nodes = figma.currentPage.findAll(node => node.type === 'VECTOR');
