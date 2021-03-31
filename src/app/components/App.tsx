@@ -28,10 +28,10 @@ const asyncMethod: RequestCreator = (url, token, method, body) =>
     return response.json();
   });
 
-type LastFileShaGetter = (config: Config) => Promise<unknown>;
-const getLastFileSha: LastFileShaGetter = config =>
+type LastFileShaGetter = (config: Config, fileName: string) => Promise<unknown>;
+const getLastFileSha: LastFileShaGetter = (config, fileName) =>
   asyncMethod(
-    `${config.repoPath}/contents/styles.json?ref=${config.headBranch}`,
+    `${config.repoPath}/${fileName}?ref=${config.headBranch}`,
     config.token,
     'GET'
   );
@@ -39,29 +39,42 @@ const getLastFileSha: LastFileShaGetter = config =>
 type ChangesToHeadBranchCommitter = (
   config: Config,
   event: EventData,
-  sha: string
+  sha?: string
 ) => Promise<unknown>;
 const commitChangesToHeadBranch: ChangesToHeadBranchCommitter = (
   config,
   event,
   sha
-) =>
-  asyncMethod(
-    `${config.repoPath}/contents/styles.json`,
+) => {
+  const fileName = event.data.pluginMessage.fileName;
+  return asyncMethod(
+    `${config.repoPath}/${fileName}`,
     config.token,
     'PUT',
-    JSON.stringify({
-      // TODO: change later to a title with tags, etc.
-      message: 'applying Figma styles update',
-      content: window.btoa(event.data.pluginMessage.content),
-      branch: config.headBranch,
-      committer: {
-        name: config.committerName,
-        email: config.committerEmail,
-      },
-      sha,
-    })
+    sha
+      ? JSON.stringify({
+          // TODO: change later to a title with tags, etc.
+          message: 'applying Figma styles update',
+          content: window.btoa(event.data.pluginMessage.content),
+          branch: config.headBranch,
+          committer: {
+            name: config.committerName,
+            email: config.committerEmail,
+          },
+          sha,
+        })
+      : JSON.stringify({
+          // TODO: change later to a title with tags, etc.
+          message: 'applying Figma styles update',
+          content: window.btoa(event.data.pluginMessage.content),
+          branch: config.headBranch,
+          committer: {
+            name: config.committerName,
+            email: config.committerEmail,
+          },
+        })
   );
+};
 
 type PullRequestCreator = (config: Config) => Promise<unknown>;
 const makePullRequestFromHeadBranch: PullRequestCreator = config => {
@@ -85,10 +98,11 @@ const makePullRequestFromHeadBranch: PullRequestCreator = config => {
 type StylesSender = (event: EventData, config: Config) => Promise<unknown>;
 const sendStylesToGithub: StylesSender = (event, config) =>
   config &&
-  getLastFileSha(config)
+  getLastFileSha(config, event.data.pluginMessage.fileName)
     .then(json => (json as {sha: string}).sha)
     .then(sha => commitChangesToHeadBranch(config, event, sha))
-    .then(() => makePullRequestFromHeadBranch(config));
+    .catch(() => commitChangesToHeadBranch(config, event));
+// .then(() => makePullRequestFromHeadBranch(config));
 
 const App: React.FC = () => {
   const [cachedConfig, setCachedConfig] = useState({
@@ -111,7 +125,7 @@ const App: React.FC = () => {
         setLoading(true);
         config &&
           sendStylesToGithub(event, config)
-            .then(closePlugin)
+            // .then(closePlugin)
             .catch(error => {
               setLoading(false);
               setErrorLog(error.toString());

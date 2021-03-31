@@ -17,15 +17,16 @@ export type EventData = {
       content: string;
       type?: string;
       config?: Config;
+      fileName: string;
     };
-  }
-}
+  };
+};
 
 type Props = {
   cachedConfig: Config;
 };
 
-const ConfigForm: React.FC<Props> = (props) => {
+const ConfigForm: React.FC<Props> = props => {
   const [repoPath, setRepoPath, bindRepoPath] = useInput('');
   const [token, setToken, bindToken] = useInput('');
   const [committerName, setCommitterName, bindCommitterName] = useInput('');

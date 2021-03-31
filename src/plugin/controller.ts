@@ -5,6 +5,8 @@ import {
   NETWORK_REQUEST,
 } from '../app/constants';
 
+const POST_MESSAGE_DELAY = 1000;
+
 type TextStyle = {
   [key: string]: {
     fontName: FontName;
@@ -41,6 +43,37 @@ type Styles = {
   colorStyles: ColorStyle[];
   textStyles: TextStyle[];
   iconStyles: IconStyle[];
+};
+
+type SvgAsyncMessageSender = (
+  node: SceneNode,
+  msg: any,
+  delay: number
+) => Promise<unknown> | void;
+const postSvgAsyncMessage: SvgAsyncMessageSender = (node, msg, delay) => {
+  node
+    .exportAsync({contentsOnly: false, format: 'SVG'})
+    .then((svg: Uint8Array) => {
+      // @ts-ignore
+      const str = String.fromCharCode.apply(null, svg);
+      let svgFile = str.replace(/"/g, "'");
+      svgFile = svgFile.replace(/\n/g, '');
+      return new Promise(() =>
+        setTimeout(
+          () =>
+            figma.ui.postMessage({
+              type: NETWORK_REQUEST,
+              content: svgFile,
+              config: msg.config,
+              fileName: node.name + '.svg',
+            }),
+          delay
+        )
+      );
+    })
+    .catch((error: Error) => {
+      console.log(`Error exporting svg. ${error}`);
+    });
 };
 
 figma.showUI(__html__, {width: 600, height: 500});
@@ -80,21 +113,12 @@ figma.ui.onmessage = msg => {
     });
 
     // Get svg icons (mostly for Web React now)
-    let nodes = figma.currentPage.findAll(node => node.type === 'VECTOR');
-    let iconStyles = [];
-    for (let node of nodes) {
-      if ('vectorPaths' in node) {
-        iconStyles.push({
-          name: node.name,
-          path: node.vectorPaths,
-          // @ts-ignore
-          paints: node.fills?.map(fill => convertPaintColor(fill)),
-          width: node.width,
-          height: node.height,
-        });
-      }
-    }
-    styles.iconStyles = iconStyles;
+    let nodes = figma.currentPage.findAll(node => node.type === 'COMPONENT');
+    let delay = 0;
+    nodes.map(node => {
+      delay += POST_MESSAGE_DELAY;
+      return postSvgAsyncMessage(node, msg, delay);
+    });
 
     // Transfer styles to ui for a network request to Github
     figma.ui.postMessage({
