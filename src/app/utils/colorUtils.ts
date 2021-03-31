@@ -1,4 +1,4 @@
-export type Color = {
+type Color = {
   r: number;
   g: number;
   b: number;
@@ -10,7 +10,19 @@ export type Paint = {
   opacity?: number;
   blendMode?: string;
   color?: Color;
-  hexColor?: string;
+  colorCode?: string;
+};
+
+type ComponentToRgbaTransformer = (
+  components: number[],
+  opacity: string
+) => string;
+const componentToRgba: ComponentToRgbaTransformer = (components, opacity) => {
+  return (
+    'rgba(' +
+    components.map(component => Math.floor(component * 255)).join(',') +
+    `,${opacity})`
+  );
 };
 
 type ComponentToHexTransformer = (component: number) => string;
@@ -19,17 +31,28 @@ const componentToHex: ComponentToHexTransformer = component => {
   return hex.length === 1 ? '0' + hex : hex;
 };
 
-type RgbToHexTransformer = (color: Color) => string;
-const rgbToHex: RgbToHexTransformer = color =>
+type RgbToColorCodeTransformer = (
+  color: Color | undefined,
+  opacity: number
+) => string;
+const rgbToColorCode: RgbToColorCodeTransformer = (color, opacity) =>
   color
-    ? '#' +
-      componentToHex(color.r) +
-      componentToHex(color.g) +
-      componentToHex(color.b)
+    ? opacity && opacity === 1
+      ? '#' +
+        componentToHex(color.r) +
+        componentToHex(color.g) +
+        componentToHex(color.b)
+      : componentToRgba([color.r, color.g, color.b], opacity.toFixed(2))
     : '';
 
 type PaintColorConverter = (paint: Paint) => Paint;
 export const convertPaintColor: PaintColorConverter = paint => ({
   ...paint,
-  hexColor: paint.color && rgbToHex(paint.color),
+  colorCode: rgbToColorCode(paint.color, paint.opacity || 1),
 });
+
+type PaintNameConverter = (paintName: string) => string;
+export const convertPaintName: PaintNameConverter = paintName => {
+  const nameSet = new Set(paintName.split('/').map(str => str.trim()));
+  return Array.from(nameSet).join('-').toLowerCase();
+};
