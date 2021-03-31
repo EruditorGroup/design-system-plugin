@@ -52,7 +52,7 @@ type SvgAsyncMessageSender = (
 ) => Promise<unknown> | void;
 const postSvgAsyncMessage: SvgAsyncMessageSender = (node, msg, delay) => {
   node
-    .exportAsync({contentsOnly: false, format: 'SVG'})
+    .exportAsync({format: 'SVG'})
     .then((svg: Uint8Array) => {
       // @ts-ignore
       const str = String.fromCharCode.apply(null, svg);
