@@ -36,7 +36,7 @@ const ConfigForm: React.FC<Props> = props => {
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     const config = {
-      repoName: repoName,
+      repoName,
       token,
       ownerName,
       headBranch,
