@@ -4,8 +4,7 @@ import {
   GITHUB_CONFIG,
   NETWORK_REQUEST,
 } from '../app/constants';
-
-const POST_MESSAGE_DELAY = 1000;
+import {File} from '../app/utils/githubUtils';
 
 type TextStyle = {
   [key: string]: {
@@ -36,35 +35,38 @@ type Styles = {
   iconStyles: IconStyle[];
 };
 
-type SvgAsyncMessageSender = (
-  node: SceneNode,
-  msg: any,
-  delay: number
-) => Promise<unknown> | void;
-const postSvgAsyncMessage: SvgAsyncMessageSender = (node, msg, delay) => {
-  node
-    .exportAsync({format: 'SVG'})
-    .then((svg: Uint8Array) => {
-      // @ts-ignore
-      const str = String.fromCharCode.apply(null, svg);
-      let svgFile = str.replace(/"/g, "'");
-      svgFile = svgFile.replace(/\n/g, '');
-      return new Promise(() =>
-        setTimeout(
-          () =>
-            figma.ui.postMessage({
-              type: NETWORK_REQUEST,
-              content: svgFile,
-              config: msg.config,
-              fileName: node.name + '.svg',
-            }),
-          delay
-        )
-      );
-    })
-    .catch((error: Error) => {
-      console.log(`Error exporting svg. ${error}`);
-    });
+type NodeToSvgFileConverter = (nodes: SceneNode[]) => Promise<File[]>;
+const convertNodeToSvgFile: NodeToSvgFileConverter = nodes => {
+  return Promise.all(
+    nodes.map(node =>
+      node.exportAsync({format: 'SVG'}).then((svg: Uint8Array) => {
+        // @ts-ignore
+        const str = String.fromCharCode.apply(null, svg);
+        let svgFile = str.replace(/"/g, "'");
+        return {
+          path: `packages/common/src/assets/dsIcons/${node.name}.svg`,
+          content: svgFile.replace(/\n/g, ''),
+        };
+      })
+    )
+  );
+};
+
+type NodeToColorsFileConverter = (paints: PaintStyle[]) => File[];
+const convertNodeToColorsFile: NodeToColorsFileConverter = paints => {
+  const colors = paints.reduce(
+    (acc, {name, paints: [paint]}) => ({
+      ...acc,
+      [convertPaintName(name)]: convertPaintColor(paint).colorCode || '',
+    }),
+    {}
+  );
+  return [
+    {
+      path: 'packages/common/src/assets/ds.json',
+      content: JSON.stringify({colors}, null, 2),
+    },
+  ];
 };
 
 figma.showUI(__html__, {width: 600, height: 500});
@@ -80,6 +82,7 @@ figma.ui.onmessage = msg => {
     let styles = {} as Styles;
 
     // Get text styles changes
+    // TODO: waiting for formatting
     styles.textStyles = figma.getLocalTextStyles().map(style => {
       return {
         [style.name]: {
@@ -94,34 +97,25 @@ figma.ui.onmessage = msg => {
     });
 
     // Get colors
-    styles.colors = figma
-      .getLocalPaintStyles()
-      .reduce((acc, {name, paints: [paint]}) => {
-        console.log(
-          acc,
-          convertPaintName(name),
-          convertPaintColor(paint).colorCode
-        );
-        return {
-          ...acc,
-          [convertPaintName(name)]: convertPaintColor(paint).colorCode || '',
-        };
-      }, {});
+    const paints = figma.getLocalPaintStyles();
+    if (paints.length) {
+      const colors = convertNodeToColorsFile(paints);
+      figma.ui.postMessage({
+        type: NETWORK_REQUEST,
+        content: colors,
+        config: msg.config,
+      });
+    }
 
-    // Get svg icons (mostly for Web React now)
-    let nodes = figma.currentPage.findAll(node => node.type === 'COMPONENT');
-    let delay = 0;
-    nodes.map(node => {
-      delay += POST_MESSAGE_DELAY;
-      return postSvgAsyncMessage(node, msg, delay);
-    });
-
-    // Transfer styles to ui for a network request to Github
-    figma.ui.postMessage({
-      type: NETWORK_REQUEST,
-      content: JSON.stringify(styles, null, 2),
-      config: msg.config,
-    });
+    // Get svg icons
+    const nodes = figma.currentPage.findAll(node => node.type === 'COMPONENT');
+    convertNodeToSvgFile(nodes).then(commits =>
+      figma.ui.postMessage({
+        type: NETWORK_REQUEST,
+        content: commits,
+        config: msg.config,
+      })
+    );
   }
   if (msg.type === 'done') {
     figma.closePlugin();

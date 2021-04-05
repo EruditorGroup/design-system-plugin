@@ -1,12 +1,12 @@
 import * as React from 'react';
 import {useInput} from '../hooks/inputHook';
 import {FormEvent} from 'react';
+import {File} from '../utils/githubUtils';
 
 export type Config = {
-  repoPath: string;
+  repoName: string;
   token: string;
-  committerName: string;
-  committerEmail: string;
+  ownerName: string;
   headBranch: string;
   baseBranch: string;
 };
@@ -14,7 +14,7 @@ export type Config = {
 export type EventData = {
   data: {
     pluginMessage: {
-      content: string;
+      content: File[];
       type?: string;
       config?: Config;
       fileName: string;
@@ -27,20 +27,18 @@ type Props = {
 };
 
 const ConfigForm: React.FC<Props> = props => {
-  const [repoPath, setRepoPath, bindRepoPath] = useInput('');
+  const [repoName, setRepoName, bindRepoName] = useInput('');
   const [token, setToken, bindToken] = useInput('');
-  const [committerName, setCommitterName, bindCommitterName] = useInput('');
-  const [committerEmail, setCommitterEmail, bindCommitterEmail] = useInput('');
+  const [ownerName, setOwnerName, bindOwnerName] = useInput('');
   const [headBranch, setHeadBranch, bindHeadBranch] = useInput('');
   const [baseBranch, setBaseBranch, bindBaseBranch] = useInput('');
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     const config = {
-      repoPath,
+      repoName: repoName,
       token,
-      committerName,
-      committerEmail,
+      ownerName,
       headBranch,
       baseBranch,
     };
@@ -48,10 +46,9 @@ const ConfigForm: React.FC<Props> = props => {
   };
 
   React.useEffect(() => {
-    setRepoPath(props.cachedConfig.repoPath);
+    setRepoName(props.cachedConfig.repoName);
     setToken(props.cachedConfig.token);
-    setCommitterName(props.cachedConfig.committerName);
-    setCommitterEmail(props.cachedConfig.committerEmail);
+    setOwnerName(props.cachedConfig.ownerName);
     setHeadBranch(props.cachedConfig.headBranch);
     setBaseBranch(props.cachedConfig.baseBranch);
   }, [props.cachedConfig]);
@@ -59,20 +56,16 @@ const ConfigForm: React.FC<Props> = props => {
   return (
     <form onSubmit={handleSubmit}>
       <label className="form-label">
-        Repo path:
-        <input type="text" {...bindRepoPath} />
+        Repo name:
+        <input type="text" {...bindRepoName} />
       </label>
       <label className="form-label">
         Github token:
         <input type="text" {...bindToken} />
       </label>
       <label className="form-label">
-        Committer name:
-        <input type="text" {...bindCommitterName} />
-      </label>
-      <label className="form-label">
-        Committer email:
-        <input type="text" {...bindCommitterEmail} />
+        Owner name:
+        <input type="text" {...bindOwnerName} />
       </label>
       <label className="form-label">
         Head branch:

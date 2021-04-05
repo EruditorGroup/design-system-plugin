@@ -10,9 +10,10 @@
 
 Плагин открывает диалоговое окно с конфигом для гитхаба и кнопкой "Отправить", по нажатию на которую происходит сбор нужных стилей с текущей страницы, создание коммита в head-ветку в .json файл со стилями и создание пул реквеста с изменениями, а если он уже есть, то добавления коммита в текущий.
 В конфиге есть следующие поля:
-- `repoPath` — путь до репозитория, в который будет выкачиваться файл со стилями,
+
+- `repoName` — название репозитория, в который будет выкачиваться файл со стилями,
 - `token` — личный токен, который можно получить [таким образом](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token),
-- `committerName`, `committerEmail` — любые имя и email, от которых будет сделан коммит,
+- `ownerName` — имя держателя репозитория (личный логин или название организации),
 - `headBranch` — ветка, в которую произойдет коммит стилей,
 - `baseBranch` — ветка, в которую произойдет пул реквест
 
@@ -95,10 +96,12 @@
 Плагин также может поддержать сетки и отступы в будущем, после доработки файлов дизайн системы в Фигме.
 
 ### Как изменить плагин
-- Изменить UI можно в [App.tsx](./src/app/components/App.tsx).  
-- Взаимодействовать с Figma API можно в [controller.ts](./src/plugin/controller.ts).  
+
+- Изменить UI можно в [App.tsx](./src/app/components/App.tsx).
+- Взаимодействовать с Figma API можно в [controller.ts](./src/plugin/controller.ts).
 
 ### Используемые инструменты
+
 - React + Webpack
 - TypeScript
 - Prettier precommit hook
@@ -109,4 +112,3 @@
 - [Figma Nodes documentation](https://www.figma.com/plugin-docs/api/nodes/)
 - [Figma network requests](https://www.figma.com/plugin-docs/making-network-requests/)
 - [Github API](https://docs.github.com/en/free-pro-team@latest/rest)
-
