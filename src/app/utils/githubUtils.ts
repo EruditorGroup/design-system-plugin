@@ -50,7 +50,7 @@ export const commitMultipleFiles: MultipleFilesCommitter = async (
   )
     // put blobs on the trees
     .then((blobs: any) =>
-      fetchTree().then(() =>
+      fetchTree().then((tree: any) =>
         octokit.request('POST /repos/{owner}/{repo}/git/trees', {
           owner,
           repo,
@@ -66,7 +66,7 @@ export const commitMultipleFiles: MultipleFilesCommitter = async (
               sha: blobs[index].data.sha,
             };
           }),
-          // base_tree: tree.data.sha,
+          base_tree: tree.data.sha,
         })
       )
     )
