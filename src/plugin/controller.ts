@@ -1,9 +1,4 @@
 import {convertPaintColor, convertPaintName} from '../app/utils/colorUtils';
-import {
-  GET_CONFIG_MESSAGE,
-  GITHUB_CONFIG,
-  NETWORK_REQUEST,
-} from '../app/constants';
 import {File} from '../app/utils/githubUtils';
 
 type TextStyle = {
@@ -42,7 +37,7 @@ const convertNodeToSvgFile: NodeToSvgFileConverter = nodes => {
       node.exportAsync({format: 'SVG'}).then((svg: Uint8Array) => {
         // @ts-ignore
         const str = String.fromCharCode.apply(null, svg);
-        let svgFile = str.replace(/"/g, "'");
+        const svgFile = str.replace(/"/g, "'");
         return {
           path: `packages/common/src/assets/dsIcons/${node.name}.svg`,
           content: svgFile.replace(/\n/g, ''),
@@ -72,9 +67,9 @@ const convertNodeToColorsFile: NodeToColorsFileConverter = paints => {
 figma.showUI(__html__, {width: 600, height: 500});
 
 figma.ui.onmessage = msg => {
-  if (msg.type === GET_CONFIG_MESSAGE) {
+  if (msg.type === 'GET_CONFIG_MESSAGE') {
     figma.clientStorage.getAsync('config').then(config => {
-      figma.ui.postMessage({type: GITHUB_CONFIG, config: JSON.parse(config)});
+      figma.ui.postMessage({type: 'GITHUB_CONFIG', config: JSON.parse(config)});
     });
   }
   if (msg.type === 'send') {
@@ -101,7 +96,7 @@ figma.ui.onmessage = msg => {
     if (paints.length) {
       const colors = convertNodeToColorsFile(paints);
       figma.ui.postMessage({
-        type: NETWORK_REQUEST,
+        type: 'NETWORK_REQUEST',
         content: colors,
         config: msg.config,
       });
@@ -111,7 +106,7 @@ figma.ui.onmessage = msg => {
     const nodes = figma.currentPage.findAll(node => node.type === 'COMPONENT');
     convertNodeToSvgFile(nodes).then(commits =>
       figma.ui.postMessage({
-        type: NETWORK_REQUEST,
+        type: 'NETWORK_REQUEST',
         content: commits,
         config: msg.config,
       })

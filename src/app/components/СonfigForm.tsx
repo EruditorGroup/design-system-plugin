@@ -11,16 +11,23 @@ export type Config = {
   baseBranch: string;
 };
 
+type NetworkRequestMessage = {
+  type: 'NETWORK_REQUEST',
+  content: File[],
+  config: Config,
+  fileName: string
+}
+
+type GithubConfigMessage = {
+  type: 'GITHUB_CONFIG',
+  config: Config;
+}
+
 export type EventData = {
   data: {
-    pluginMessage: {
-      content: File[];
-      type?: string;
-      config?: Config;
-      fileName: string;
-    };
-  };
-};
+    pluginMessage: NetworkRequestMessage | GithubConfigMessage
+  }
+}
 
 type Props = {
   cachedConfig: Config;

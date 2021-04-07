@@ -1,8 +1,7 @@
 import * as React from 'react';
 import {useState} from 'react';
 import '../styles/ui.css';
-import ConfigForm, {Config, EventData} from './СonfigForm';
-import {GET_CONFIG_MESSAGE, GITHUB_CONFIG, NETWORK_REQUEST} from '../constants';
+import ConfigForm, {EventData} from './СonfigForm';
 import {commitMultipleFiles} from '../utils/githubUtils';
 
 const SUCCESS_LOG_MESSAGE = 'Успешно отправлено!';
@@ -20,15 +19,15 @@ const App: React.FC = () => {
   const [successLog, setSuccessLog] = useState('');
 
   React.useEffect(() => {
-    parent.postMessage({pluginMessage: {type: GET_CONFIG_MESSAGE}}, '*');
+    parent.postMessage({pluginMessage: {type: 'GET_CONFIG_MESSAGE'}}, '*');
     const listener = (event: EventData) => {
-      if (event.data.pluginMessage.type === NETWORK_REQUEST) {
+      if (event.data.pluginMessage.type === 'NETWORK_REQUEST') {
         const config = event.data.pluginMessage.config;
         setLoading(true);
-        config && commitMultipleFiles(config, event.data.pluginMessage.content);
+        commitMultipleFiles(config, event.data.pluginMessage.content);
       }
 
-      if (event.data.pluginMessage.type === GITHUB_CONFIG) {
+      if (event.data.pluginMessage.type === 'GITHUB_CONFIG') {
         event.data.pluginMessage.config &&
           setCachedConfig(event.data.pluginMessage.config);
       }
