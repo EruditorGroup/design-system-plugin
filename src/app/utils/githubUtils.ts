@@ -28,80 +28,85 @@ export const commitMultipleFiles: MultipleFilesCommitter = async (
   const type: GitType = 'blob';
   const mode: CommitMode = '100644';
 
-  // get last tree
-  const reference = await octokit.request(
-    'GET /repos/{owner}/{repo}/git/ref/heads/{ref}',
-    {
+  try {
+
+    // get last tree
+    const reference = await octokit.request(
+      'GET /repos/{owner}/{repo}/git/ref/heads/{ref}',
+      {
+        owner,
+        repo,
+        ref,
+      }
+    );
+    const tree = await octokit.request(
+      'GET /repos/{owner}/{repo}/git/trees/{treeSha}',
+      {
+        owner,
+        repo,
+        treeSha: reference.data.object.sha,
+      }
+    );
+
+    // create blobs for the files
+    const blobs = await Promise.all(
+      files.map(file =>
+        // create blobs for the files
+        octokit.request('POST /repos/{owner}/{repo}/git/blobs', {
+          owner,
+          repo,
+          content: file.content,
+        })
+      )
+    );
+
+    // put blobs on the tree
+    const newTree = await octokit.request(
+      'POST /repos/{owner}/{repo}/git/trees',
+      {
+        owner,
+        repo,
+        tree: files.map((file, index) => {
+          return {
+            path: file.path,
+            mode,
+            type,
+            sha: blobs[index].data.sha,
+          };
+        }),
+        base_tree: tree.data.sha,
+      }
+    );
+
+    // commit the tree
+    const commit = await octokit.request(
+      'POST /repos/{owner}/{repo}/git/commits',
+      {
+        owner,
+        repo,
+        message: COMMIT_MESSAGE,
+        tree: newTree.data.sha,
+        parents: [reference.data.object.sha],
+      }
+    );
+
+    // update the reference
+    await octokit.request('PATCH /repos/{owner}/{repo}/git/refs/heads/{ref}', {
       owner,
       repo,
       ref,
-    }
-  );
-  const tree = await octokit.request(
-    'GET /repos/{owner}/{repo}/git/trees/{treeSha}',
-    {
+      sha: commit.data.sha,
+    });
+
+    // create pull request
+    await octokit.request('POST /repos/{owner}/{repo}/pulls', {
       owner,
       repo,
-      treeSha: reference.data.object.sha,
-    }
-  );
-
-  // create blobs for the files
-  const blobs = await Promise.all(
-    files.map(file =>
-      // create blobs for the files
-      octokit.request('POST /repos/{owner}/{repo}/git/blobs', {
-        owner,
-        repo,
-        content: file.content,
-      })
-    )
-  );
-
-  // put blobs on the tree
-  const newTree = await octokit.request(
-    'POST /repos/{owner}/{repo}/git/trees',
-    {
-      owner,
-      repo,
-      tree: files.map((file, index) => {
-        return {
-          path: file.path,
-          mode,
-          type,
-          sha: blobs[index].data.sha,
-        };
-      }),
-      base_tree: tree.data.sha,
-    }
-  );
-
-  // commit the tree
-  const commit = await octokit.request(
-    'POST /repos/{owner}/{repo}/git/commits',
-    {
-      owner,
-      repo,
-      message: COMMIT_MESSAGE,
-      tree: newTree.data.sha,
-      parents: [reference.data.object.sha],
-    }
-  );
-
-  // update the reference
-  await octokit.request('PATCH /repos/{owner}/{repo}/git/refs/heads/{ref}', {
-    owner,
-    repo,
-    ref,
-    sha: commit.data.sha,
-  });
-
-  // create pull request
-  await octokit.request('POST /repos/{owner}/{repo}/pulls', {
-    owner,
-    repo,
-    head: ref,
-    base,
-    title: PULL_REQUEST_TITLE,
-  });
+      head: ref,
+      base,
+      title: PULL_REQUEST_TITLE,
+    });
+  } catch (err) {
+    throw Error(err.toString());
+  }
 };

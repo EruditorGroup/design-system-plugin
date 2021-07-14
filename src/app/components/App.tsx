@@ -31,7 +31,7 @@ const App: React.FC = () => {
           })
           .catch(err => {
             setLoading(false);
-            setErrorLog(err);
+            setErrorLog(err.toString());
           });
       }
 
