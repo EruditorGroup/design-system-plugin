@@ -1,34 +1,11 @@
 import {convertPaintColor, convertPaintName} from '../app/utils/colorUtils';
 import {File} from '../app/utils/githubUtils';
+import {lowerFirstLetter} from '../app/utils/stringUtils';
 
-type TextStyle = {
-  [key: string]: {
-    fontName: FontName;
-    fontSize: number;
-    textCase: TextCase;
-    textDecoration: TextDecoration;
-    letterSpacing: LetterSpacing;
-    lineHeight: LineHeight;
-  };
-};
-
-type ColorStyle = {
-  [key: string]: string;
-};
-
-type IconStyle = {
-  name: string;
-  path: VectorPaths;
-  paints: any;
-  width: number;
-  height: number;
-};
-
-type Styles = {
-  colors: ColorStyle;
-  textStyles: TextStyle[];
-  iconStyles: IconStyle[];
-};
+const SYSTEM_FONT_FAMILY =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', " +
+  "Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', " +
+  "'Segoe UI Emoji', 'Segoe UI Symbol'";
 
 type NodeToSvgFileConverter = (nodes: SceneNode[]) => Promise<File[]>;
 const convertNodeToSvgFile: NodeToSvgFileConverter = nodes => {
@@ -58,8 +35,40 @@ const convertNodeToColorsFile: NodeToColorsFileConverter = paints => {
   );
   return [
     {
-      path: 'packages/common/src/assets/ds.json',
+      path: 'packages/common/src/assets/colors.json',
       content: JSON.stringify({colors}, null, 2),
+    },
+  ];
+};
+
+type TextStylesToTypographyConverter = (textStyles: TextStyle[]) => File[];
+const convertTextStylesToTypography: TextStylesToTypographyConverter = textStyles => {
+  console.log(textStyles);
+  const fonts = textStyles.reduce(
+    (acc, text) => ({
+      ...acc,
+      [lowerFirstLetter(text.name.split('/')[1].split(' · ')[0])]: {
+        ...acc[lowerFirstLetter(text.name.split('/')[1].split(' · ')[0])],
+        [lowerFirstLetter(text.name.split('/')[1].split(' · ')[1])]: {
+          fontFamily: SYSTEM_FONT_FAMILY,
+          lineHeight: text.lineHeight?.value + 'px' || '',
+          letterSpacing: text.letterSpacing.value.toFixed(2) + 'px',
+          fontSize: text.fontSize,
+        },
+      },
+    }),
+    {}
+  );
+  const weight = {
+    bold: 'bold',
+    medium: '500',
+    regular: 'normal',
+  };
+
+  return [
+    {
+      path: 'packages/common/src/assets/fonts.json',
+      content: JSON.stringify({fonts, weight}, null, 2),
     },
   ];
 };
@@ -74,26 +83,21 @@ figma.ui.onmessage = msg => {
   }
   if (msg.type === 'send') {
     figma.clientStorage.setAsync('config', JSON.stringify(msg.config));
-    let styles = {} as Styles;
 
-    // Get text styles changes
-    // TODO: waiting for formatting
-    styles.textStyles = figma.getLocalTextStyles().map(style => {
-      return {
-        [style.name]: {
-          fontName: style.fontName,
-          fontSize: style.fontSize,
-          textCase: style.textCase,
-          textDecoration: style.textDecoration,
-          letterSpacing: style.letterSpacing,
-          lineHeight: style.lineHeight,
-        },
-      };
-    });
+    // Get typography
+    const textStyles = figma.getLocalTextStyles();
+    if (textStyles.length) {
+      const typography = convertTextStylesToTypography(textStyles);
+      figma.ui.postMessage({
+        type: 'NETWORK_REQUEST',
+        content: typography,
+        config: msg.config,
+      });
+    }
 
-    // Get colors
+    // // Get colors
     const paints = figma.getLocalPaintStyles();
-    if (paints.length) {
+    if (paints.length > 1) {
       const colors = convertNodeToColorsFile(paints);
       figma.ui.postMessage({
         type: 'NETWORK_REQUEST',

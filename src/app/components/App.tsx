@@ -24,7 +24,9 @@ const App: React.FC = () => {
       if (event.data.pluginMessage.type === 'NETWORK_REQUEST') {
         const config = event.data.pluginMessage.config;
         setLoading(true);
-        commitMultipleFiles(config, event.data.pluginMessage.content);
+        commitMultipleFiles(config, event.data.pluginMessage.content)
+          .then(() => setSuccessLog(SUCCESS_LOG_MESSAGE))
+          .catch(err => setErrorLog(err));
       }
 
       if (event.data.pluginMessage.type === 'GITHUB_CONFIG') {
