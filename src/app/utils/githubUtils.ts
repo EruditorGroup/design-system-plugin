@@ -10,14 +10,20 @@ type GitType = 'tree' | 'blob' | 'commit';
 type CommitMode = '100644' | '100755' | '040000' | '160000' | '120000';
 
 const COMMIT_MESSAGE = 'Updating design system styles';
-// const PULL_REQUEST_TITLE = 'Updating design system styles';
+const PULL_REQUEST_TITLE = '[-][Common][DS] Updating design system styles';
 
 type MultipleFilesCommitter = (options: Config, files: File[]) => Promise<void>;
 export const commitMultipleFiles: MultipleFilesCommitter = async (
   options,
   files
 ) => {
-  const {ownerName: owner, repoName: repo, headBranch: ref, token} = options;
+  const {
+    ownerName: owner,
+    repoName: repo,
+    headBranch: ref,
+    baseBranch: base,
+    token,
+  } = options;
   const octokit = new Octokit({auth: token});
   const type: GitType = 'blob';
   const mode: CommitMode = '100644';
@@ -88,5 +94,14 @@ export const commitMultipleFiles: MultipleFilesCommitter = async (
     repo,
     ref,
     sha: commit.data.sha,
+  });
+
+  // create pull request
+  await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+    owner,
+    repo,
+    head: ref,
+    base,
+    title: PULL_REQUEST_TITLE,
   });
 };

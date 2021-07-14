@@ -25,8 +25,14 @@ const App: React.FC = () => {
         const config = event.data.pluginMessage.config;
         setLoading(true);
         commitMultipleFiles(config, event.data.pluginMessage.content)
-          .then(() => setSuccessLog(SUCCESS_LOG_MESSAGE))
-          .catch(err => setErrorLog(err));
+          .then(() => {
+            setLoading(false);
+            setSuccessLog(SUCCESS_LOG_MESSAGE);
+          })
+          .catch(err => {
+            setLoading(false);
+            setErrorLog(err);
+          });
       }
 
       if (event.data.pluginMessage.type === 'GITHUB_CONFIG') {
@@ -41,23 +47,13 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // TODO: add when all parts of styles are ready
-  // const closePlugin = () => {
-  //   setLoading(false);
-  //   setSuccessLog(SUCCESS_LOG_MESSAGE);
-  //   setTimeout(
-  //     () => window.parent.postMessage({pluginMessage: {type: 'done'}}, '*'),
-  //     1000
-  //   );
-  // };
-
   return (
     <div>
       <h2 className="header">Синхронизировать дизайн с кодом?</h2>
       <ConfigForm cachedConfig={cachedConfig} />
       {isLoading ? (
         <p>Передаю обновления в код...</p>
-      ) : errorLog.length > 0 ? (
+      ) : errorLog.length ? (
         <p className="error-message">{errorLog}</p>
       ) : (
         <p className="success-message">{successLog}</p>

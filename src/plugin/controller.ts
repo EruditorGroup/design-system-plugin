@@ -116,7 +116,4 @@ figma.ui.onmessage = msg => {
       })
     );
   }
-  if (msg.type === 'done') {
-    figma.closePlugin();
-  }
 };
