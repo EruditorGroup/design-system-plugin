@@ -43,7 +43,6 @@ const convertNodeToColorsFile: NodeToColorsFileConverter = paints => {
 
 type TextStylesToTypographyConverter = (textStyles: TextStyle[]) => File[];
 const convertTextStylesToTypography: TextStylesToTypographyConverter = textStyles => {
-  console.log(textStyles);
   const fonts = textStyles.reduce(
     (acc, text) => ({
       ...acc,
