@@ -14,10 +14,10 @@ const convertNodeToSvgFile: NodeToSvgFileConverter = nodes => {
       node.exportAsync({format: 'SVG'}).then((svg: Uint8Array) => {
         // @ts-ignore
         const str = String.fromCharCode.apply(null, svg);
-        const svgFile = str.replace(/"/g, "'");
+        const content = str.replace(/"/g, "'").replace(/\n/g, '');
         return {
           path: `packages/common/src/assets/dsIcons/${node.name}.svg`,
-          content: svgFile.replace(/\n/g, ''),
+          content,
         };
       })
     )
