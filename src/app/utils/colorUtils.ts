@@ -1,3 +1,5 @@
+import {capitalizeFirstLetter, lowerFirstLetter} from './stringUtils';
+
 type Color = {
   r: number;
   g: number;
@@ -53,6 +55,8 @@ export const convertPaintColor: PaintColorConverter = paint => ({
 
 type PaintNameConverter = (paintName: string) => string;
 export const convertPaintName: PaintNameConverter = paintName => {
-  const nameSet = new Set(paintName.split('/').map(str => str.trim()));
-  return Array.from(nameSet).join('-').toLowerCase();
+  const nameSet = new Set(
+    paintName.split('/').map(str => capitalizeFirstLetter(str.trim()))
+  );
+  return lowerFirstLetter(Array.from(nameSet).join(''));
 };

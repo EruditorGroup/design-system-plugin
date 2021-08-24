@@ -1,105 +1,118 @@
 import {convertPaintColor, convertPaintName} from '../app/utils/colorUtils';
-import {
-  GET_CONFIG_MESSAGE,
-  GITHUB_CONFIG,
-  NETWORK_REQUEST,
-} from '../app/constants';
+import {File} from '../app/utils/githubUtils';
+import {lowerFirstLetter} from '../app/utils/stringUtils';
 
-type TextStyle = {
-  [key: string]: {
-    fontName: FontName;
-    fontSize: number;
-    textCase: TextCase;
-    textDecoration: TextDecoration;
-    letterSpacing: LetterSpacing;
-    lineHeight: LineHeight;
+const SYSTEM_FONT_FAMILY =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', " +
+  "Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', " +
+  "'Segoe UI Emoji', 'Segoe UI Symbol'";
+
+type NodeToSvgFileConverter = (nodes: SceneNode[]) => Promise<File[]>;
+const convertNodeToSvgFile: NodeToSvgFileConverter = nodes => {
+  return Promise.all(
+    nodes.map(node =>
+      node.exportAsync({format: 'SVG'}).then((svg: Uint8Array) => {
+        // @ts-ignore
+        const str = String.fromCharCode.apply(null, svg);
+        const content = str.replace(/"/g, "'").replace(/\n/g, '');
+        return {
+          path: `packages/common/src/assets/dsIcons/${node.name}.svg`,
+          content,
+        };
+      })
+    )
+  );
+};
+
+type NodeToColorsFileConverter = (paints: PaintStyle[]) => File[];
+const convertNodeToColorsFile: NodeToColorsFileConverter = paints => {
+  const colors = paints.reduce(
+    (acc, {name, paints: [paint]}) => ({
+      ...acc,
+      [convertPaintName(name)]: convertPaintColor(paint).colorCode || '',
+    }),
+    {}
+  );
+  return [
+    {
+      path: 'packages/common/src/assets/colors.json',
+      content: JSON.stringify({colors}, null, 2),
+    },
+  ];
+};
+
+type TextStylesToTypographyConverter = (textStyles: TextStyle[]) => File[];
+const convertTextStylesToTypography: TextStylesToTypographyConverter = textStyles => {
+  const fonts = textStyles.reduce(
+    (acc, text) => ({
+      ...acc,
+      [lowerFirstLetter(text.name.split('/')[1].split(' · ')[0])]: {
+        ...acc[lowerFirstLetter(text.name.split('/')[1].split(' · ')[0])],
+        [lowerFirstLetter(text.name.split('/')[1].split(' · ')[1])]: {
+          fontFamily: SYSTEM_FONT_FAMILY,
+          lineHeight: text.lineHeight?.value + 'px' || '',
+          letterSpacing: text.letterSpacing.value.toFixed(2) + 'px',
+          fontSize: text.fontSize,
+        },
+      },
+    }),
+    {}
+  );
+  const weight = {
+    bold: 'bold',
+    medium: '500',
+    regular: 'normal',
   };
-};
 
-type ColorStyle = {
-  [key: string]: string;
-};
-
-type IconStyle = {
-  name: string;
-  path: VectorPaths;
-  paints: any;
-  width: number;
-  height: number;
-};
-
-type Styles = {
-  colors: ColorStyle;
-  textStyles: TextStyle[];
-  iconStyles: IconStyle[];
+  return [
+    {
+      path: 'packages/common/src/assets/fonts.json',
+      content: JSON.stringify({fonts, weight}, null, 2),
+    },
+  ];
 };
 
 figma.showUI(__html__, {width: 600, height: 500});
 
 figma.ui.onmessage = msg => {
-  if (msg.type === GET_CONFIG_MESSAGE) {
+  if (msg.type === 'GET_CONFIG_MESSAGE') {
     figma.clientStorage.getAsync('config').then(config => {
-      figma.ui.postMessage({type: GITHUB_CONFIG, config: JSON.parse(config)});
+      figma.ui.postMessage({type: 'GITHUB_CONFIG', config: JSON.parse(config)});
     });
   }
   if (msg.type === 'send') {
     figma.clientStorage.setAsync('config', JSON.stringify(msg.config));
-    let styles = {} as Styles;
 
-    // Get text styles changes
-    styles.textStyles = figma.getLocalTextStyles().map(style => {
-      return {
-        [style.name]: {
-          fontName: style.fontName,
-          fontSize: style.fontSize,
-          textCase: style.textCase,
-          textDecoration: style.textDecoration,
-          letterSpacing: style.letterSpacing,
-          lineHeight: style.lineHeight,
-        },
-      };
-    });
-
-    // Get colors
-    styles.colors = figma
-      .getLocalPaintStyles()
-      .reduce((acc, {name, paints: [paint]}) => {
-        console.log(
-          acc,
-          convertPaintName(name),
-          convertPaintColor(paint).colorCode
-        );
-        return {
-          ...acc,
-          [convertPaintName(name)]: convertPaintColor(paint).colorCode || '',
-        };
-      }, {});
-
-    // Get svg icons (mostly for Web React now)
-    let nodes = figma.currentPage.findAll(node => node.type === 'VECTOR');
-    let iconStyles = [];
-    for (let node of nodes) {
-      if ('vectorPaths' in node) {
-        iconStyles.push({
-          name: node.name,
-          path: node.vectorPaths,
-          // @ts-ignore
-          paints: node.fills?.map(fill => convertPaintColor(fill)),
-          width: node.width,
-          height: node.height,
-        });
-      }
+    // Get typography
+    const textStyles = figma.getLocalTextStyles();
+    if (textStyles.length) {
+      const typography = convertTextStylesToTypography(textStyles);
+      figma.ui.postMessage({
+        type: 'NETWORK_REQUEST',
+        content: typography,
+        config: msg.config,
+      });
     }
-    styles.iconStyles = iconStyles;
 
-    // Transfer styles to ui for a network request to Github
-    figma.ui.postMessage({
-      type: NETWORK_REQUEST,
-      content: JSON.stringify(styles, null, 2),
-      config: msg.config,
-    });
-  }
-  if (msg.type === 'done') {
-    figma.closePlugin();
+    // // Get colors
+    const paints = figma.getLocalPaintStyles();
+    if (paints.length > 1) {
+      const colors = convertNodeToColorsFile(paints);
+      figma.ui.postMessage({
+        type: 'NETWORK_REQUEST',
+        content: colors,
+        config: msg.config,
+      });
+    }
+
+    // Get svg icons
+    const nodes = figma.currentPage.findAll(node => node.type === 'COMPONENT');
+    convertNodeToSvgFile(nodes).then(commits =>
+      figma.ui.postMessage({
+        type: 'NETWORK_REQUEST',
+        content: commits,
+        config: msg.config,
+      })
+    );
   }
 };
