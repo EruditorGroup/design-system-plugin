@@ -84,7 +84,7 @@ const ConfigForm: React.FC<Props> = props => {
         <input type="text" {...bindBaseBranch} />
       </label>
       <button type="submit" value="Submit" className="submit-button">
-        Отправить
+        Sync now
       </button>
     </form>
   );

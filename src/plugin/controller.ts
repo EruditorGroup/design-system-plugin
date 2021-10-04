@@ -107,12 +107,14 @@ figma.ui.onmessage = msg => {
 
     // Get svg icons
     const nodes = figma.currentPage.findAll(node => node.type === 'COMPONENT');
-    convertNodeToSvgFile(nodes).then(commits =>
-      figma.ui.postMessage({
-        type: 'NETWORK_REQUEST',
-        content: commits,
-        config: msg.config,
-      })
-    );
+    if (nodes.length) {
+      convertNodeToSvgFile(nodes).then(commits =>
+        figma.ui.postMessage({
+          type: 'NETWORK_REQUEST',
+          content: commits,
+          config: msg.config,
+        })
+      );
+    }
   }
 };

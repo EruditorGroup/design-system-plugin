@@ -58,20 +58,20 @@ export const commitMultipleFiles: MultipleFilesCommitter = async (
     )
   );
 
+  const treeFiles = files.map((file, index) => ({
+    path: file.path,
+    mode,
+    type,
+    sha: blobs[index].data.sha,
+  }));
+
   // put blobs on the tree
   const newTree = await octokit.request(
     'POST /repos/{owner}/{repo}/git/trees',
     {
       owner,
       repo,
-      tree: files.map((file, index) => {
-        return {
-          path: file.path,
-          mode,
-          type,
-          sha: blobs[index].data.sha,
-        };
-      }),
+      tree: treeFiles,
       base_tree: tree.data.sha,
     }
   );

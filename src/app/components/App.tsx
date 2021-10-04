@@ -4,7 +4,7 @@ import '../styles/ui.css';
 import ConfigForm, {EventData} from './СonfigForm';
 import {commitMultipleFiles} from '../utils/githubUtils';
 
-const SUCCESS_LOG_MESSAGE = 'Успешно отправлено!';
+const SUCCESS_LOG_MESSAGE = 'Successfully synced!';
 const GET_CONFIG_MESSAGE = 'GET_CONFIG_MESSAGE';
 const NETWORK_REQUEST = 'NETWORK_REQUEST';
 const GITHUB_CONFIG = 'GITHUB_CONFIG';
@@ -52,10 +52,10 @@ const App: React.FC = () => {
 
   return (
     <div>
-      <h2 className="header">Синхронизировать дизайн с кодом?</h2>
+      <h2 className="header">Sync design system with code?</h2>
       <ConfigForm cachedConfig={cachedConfig} />
       {isLoading ? (
-        <p>Передаю обновления в код...</p>
+        <p>Please wait...</p>
       ) : errorLog.length ? (
         <p className="error-message">{errorLog}</p>
       ) : (
