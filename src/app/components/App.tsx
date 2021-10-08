@@ -4,7 +4,7 @@ import '../styles/ui.css';
 import ConfigForm, {EventData} from './СonfigForm';
 import {commitMultipleFiles} from '../utils/githubUtils';
 
-const SUCCESS_LOG_MESSAGE = 'Successfully synced!';
+const SUCCESS_LOG_MESSAGE = 'Successfully synced';
 const GET_CONFIG_MESSAGE = 'GET_CONFIG_MESSAGE';
 const NETWORK_REQUEST = 'NETWORK_REQUEST';
 const GITHUB_CONFIG = 'GITHUB_CONFIG';
@@ -33,8 +33,18 @@ const App: React.FC = () => {
             setSuccessLog(SUCCESS_LOG_MESSAGE);
           })
           .catch(err => {
+            let pluginMessage = err.toString();
+            if (err.errors && err.errors.length) {
+              if (
+                err.errors[0].resource === 'PullRequest' &&
+                err.errors[0].message.match(/pull request already exists/)
+              ) {
+                pluginMessage =
+                  SUCCESS_LOG_MESSAGE + ', but a pull request already exists.';
+              }
+            }
             setLoading(false);
-            setErrorLog(err.toString());
+            setErrorLog(pluginMessage);
           });
       }
 

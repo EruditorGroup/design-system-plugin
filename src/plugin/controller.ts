@@ -94,7 +94,7 @@ figma.ui.onmessage = msg => {
       });
     }
 
-    // // Get colors
+    // Get colors
     const paints = figma.getLocalPaintStyles();
     if (paints.length > 1) {
       const colors = convertNodeToColorsFile(paints);
